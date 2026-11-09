@@ -1,6 +1,95 @@
-**/__pycache__/
+# ===============================
+# Entornos Virtuales y Python
+# ===============================
+__pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-
-**/.env
+# Entornos virtuales (virtualenv, venv, conda, pipenv, poetry)
 .venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# ===============================
+# Variables de Entorno y Secretos
+# ===============================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# ===============================
+# Flet y Salidas de Compilación
+# ===============================
+.flet/
+dist_flet/
+
+# ===============================
+# IDEs y Editores de Código
+# ===============================
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ===============================
+# Archivos del Sistema Operativo
+# ===============================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ===============================
+# Logs, Pruebas y Base de Datos local
+# ===============================
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite
+*.sqlite3
+*.db
+
+# ===============================
+# Archivos Temporales / Documentos Locales
+# ===============================
+estructura_proyecto_Punto_Venta.md
+organizacion_proyecto.md
