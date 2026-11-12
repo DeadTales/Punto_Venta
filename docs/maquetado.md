@@ -29,7 +29,8 @@ La barra lateral siempre muestra Caja, Carrito, Inventario, Clientes, Reportes, 
 | Configuración / Aspectos, Contraseña, Correo | Configuración → pestaña | 2 |
 | Importar inventario | Inventario → Importar Excel | 2 para abrir el módulo |
 
-La regla de menos de tres clics corresponde al acceso a vistas, no a omitir las confirmaciones de cobro o importación. A partir de 980 px se compacta la barra lateral a iconos con tooltip; el contenido usa columnas responsivas y las tablas admiten desplazamiento horizontal.
+
+También a partir de 980 px se compacta la barra lateral a iconos con tooltip; el contenido usa columnas responsivas y las tablas admiten desplazamiento horizontal.
 
 ## Vistas y comportamiento
 
