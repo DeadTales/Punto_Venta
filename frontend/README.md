@@ -3,8 +3,8 @@
 Desde la raíz, con el entorno frontend activo:
 
 ```bash
-python -m pip install -r frontend/requirements.txt
-python -m frontend.src.main
+pip install -r frontend/requirements.txt
+python frontend/src/main,py
 ```
 
 También admite `flet run frontend/src/main.py`. Se usa la API de Flet **1.1.2**, con selectores de archivos asíncronos y `page.show_dialog`. En Linux instala Zenity con el gestor de paquetes de tu distribución si no está disponible. [Referencia oficial del selector](https://flet.dev/docs/services/filepicker/).
@@ -19,7 +19,7 @@ No introduzcas `DATABASE_URL`, contraseñas de PostgreSQL ni `SYNC_KEY` en el fr
 Los requirements se normalizaron a UTF-8 y dependencias directas: Flet, HTTP, validación, Excel y periféricos. SQLAlchemy/asyncpg pertenecen al entorno backend. Si necesitas que **el entorno frontend ejecute también la API local**, instala explícitamente:
 
 ```bash
-python -m pip install -r frontend/requirements-offline.txt
+pip install -r frontend/requirements-offline.txt
 ```
 
 Con tus dos entornos separados no hace falta ese extra: ejecuta la API local en la terminal backend y Flet en la terminal frontend. PostgreSQL se instala como servicio del sistema, independientemente de pip.
