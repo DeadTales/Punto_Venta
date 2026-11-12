@@ -1,7 +1,5 @@
 # Maquetado de escritorio
 
-La aplicación respeta Flet, FastAPI y PostgreSQL indicados en los documentos. La distribución de tareas y el calendario de `organizacion_proyecto.md` se toman como contexto del proyecto, no como instrucciones para crear cuentas, contactar integrantes o ejecutar acciones en la nube.
-
 Capturas reales del maquetado ejecutado con Flet (datos demo):
 
 - [Caja / Inicio](previews/caja-inicio.png)
