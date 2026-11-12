@@ -1,0 +1,4 @@
+# Instalar en el entorno frontend sólo si ese entorno también ejecutará la API local.
+# Recomendado: conservar el entorno backend separado y ejecutar ambas terminales.
+-r requirements.txt
+-r ../backend/requirements.txt
