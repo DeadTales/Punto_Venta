@@ -40,7 +40,8 @@ Inicia la API:
 uvicorn backend/src/main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Swagger: <http://127.0.0.1:8000/docs>. En el entorno frontend configura `frontend/.env` a partir del ejemplo con `POS_MODE=api` y `API_BASE_URL=http://127.0.0.1:8000`. Inicia el escritorio e ingresa con tu empleado existente o `admin@pos.local` si ejecutaste bootstrap.
+Swagger: <http://127.0.0.1:8000/docs>. En el entorno frontend configura `frontend/.env` a partir del ejemplo con `POS_MODE=api` y `API_BASE_URL=http://127.0.0.1:8000`. 
+Inicia el proyecto y se ingresa con un usuario existente o `admin@pos.local` si ejecutaste bootstrap.
 
 ## Test
 
