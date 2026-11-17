@@ -45,6 +45,7 @@ Las impresoras se configuran y prueban desde Periféricos. El pago bancario y la
 
 ## Documentación y pruebas
 
+- [Manual ilustrado de usuario](docs/manual_usuario.md) y [versión PDF](docs/manual_usuario.pdf): capturas reales con referencias numeradas de pantallas y formularios.
 - [Instalación, cuentas, operación y límites](docs/operacion.md).
 - [Módulo de Persona 2](docs/persona2.md).
 - [Estilo y modularización](docs/code_style.md).
