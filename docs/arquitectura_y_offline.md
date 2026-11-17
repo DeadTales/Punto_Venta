@@ -56,17 +56,20 @@ La API central usa `DATABASE_MODE=cloud`, su `DATABASE_URL`, un `JWT_SECRET` pro
 3. Para una instalación de prueba totalmente nueva puedes usar `init-db` + `bootstrap` en cada lado: la categoría General y el administrador del bootstrap tienen UUID deterministas comunes. El resto de los registros requiere aprovisionamiento compartido. No ejecutes bootstrap para duplicar administradores de una base existente.
 4. Configura `DATABASE_MODE=local`, inicia la API en la sucursal y usa `POS_MODE=api` en Flet. Prueba primero con bases separadas de desarrollo. En la operación de esta primera versión, todas las cajas de esa sucursal deben consumir **la misma API/base local**.
 
-No se modificó ni se conectó ninguna base real del usuario durante la implementación. Los `.env` existentes se conservaron. Las migraciones se entregan para ejecución explícita.
+Las migraciones se ejecutan explícitamente mediante `python -m backend.src.cli migrate`; el arranque de la API no modifica el esquema. La configuración real permanece en `.env`, fuera del seguimiento de Git.
 
 ## Qué sincroniza esta versión
 
 | Operación | Persistencia local | Envío central |
 | --- | --- | --- |
-| Alta de productos desde formulario/Excel | Lote entero y outbox en la misma transacción | `inventory.imported`, conserva UUID y existencia inicial |
-| Alta de categorías | Categoría local | La importación transporta su identidad; crea la categoría central si no existe y no hay colisión de nombre |
+| Alta de productos desde Excel | Lote entero y outbox en la misma transacción | `inventory.imported`, conserva UUID y existencia inicial |
+| CRUD de productos y categorías | Registro y outbox en la misma transacción | `catalog.changed`, conserva UUID y comprueba los campos modificados; editar productos no reemplaza el stock central |
+| Ajustes de stock | Stock, auditoría y outbox en la misma transacción | `inventory.adjusted`, comprueba existencia anterior; diferencia de stock provoca conflicto |
 | Venta | Venta, partidas, stock y outbox en la misma transacción | `sale.completed`, precio congelado y descuento transaccional en nube |
 | Consulta de catálogos/reportes | Lectura de la base seleccionada | No genera eventos |
-| Clientes/empleados, edición/borrado de productos, ajustes de stock, cancelaciones y turnos | No implementados como escrituras operativas en este alcance | No se replican |
+| Clientes y empleados | Registro y outbox en la misma transacción | `people.changed`, UUID compartido y comprobación del estado anterior |
+| Cancelación de venta | Stock devuelto y auditoría en la misma transacción | `sale.cancelled`, después de su venta, con recibo idempotente |
+| Turnos y cortes | Tabla `turno_caja` de la base operativa | No se replican como cortes centralizados |
 
 La cola se procesa en orden. Un bloqueo asesor de PostgreSQL permite sólo un publicador local a la vez. La API central registra `sync_receipt` **en la misma transacción** que los cambios. Si se pierde la respuesta después del commit, repetir el UUID devuelve `already_applied`. La cola sólo se marca `sent` después de una confirmación reconocida. Se envían hasta 25 eventos por ciclo, con timeout por petición; los siguientes esperan el próximo ciclo o el botón manual.
 
@@ -76,14 +79,14 @@ Si la red falla, el evento sigue `pending` en disco y se reintenta. Si el proces
 
 ## Límites que quedan para una réplica completa
 
-Esta es una sincronización **de salida** para altas de inventario y ventas, no una réplica bidireccional general ni un sistema terminado de múltiples sucursales. Los cambios hechos directamente en la nube no se descargan automáticamente al local. No mantengas dos bases activas como autoridades del mismo inventario esperando una fusión automática.
+Esta es una sincronización **de salida** para catálogo, inventario y ventas, no una réplica bidireccional general ni un sistema terminado de múltiples sucursales. Los cambios hechos directamente en la nube no se descargan automáticamente al local. No mantengas dos bases activas como autoridades del mismo inventario esperando una fusión automática. Actualiza ambas APIs y aplica las migraciones 05 y 06 antes de usar los nuevos flujos; consulta [Persona 2](persona2.md).
 
-Antes de habilitar ventas independientes entre varias sucursales, cambios simultáneos de catálogo o descarga incremental se necesitan existencias por sucursal, movimientos de inventario, versiones de entidades, política de conflictos, aprovisionamiento seguro y auditoría. Los siete documentos base no definen esas entidades. Los turnos y cortes también requieren tablas adicionales; el maquetado los identifica como simulados.
+Antes de habilitar ventas independientes entre varias sucursales, cambios simultáneos de catálogo o descarga incremental se necesitan existencias por sucursal, movimientos de inventario, versiones de entidades, política de conflictos, aprovisionamiento seguro y auditoría. Los siete documentos base no definen esas entidades. Los turnos y cortes ya tienen persistencia local mediante la migración 06; su consolidación entre sucursales requiere un diseño adicional.
 
 La independencia de dos bases desconectadas impide garantizar stock global en tiempo real. Aquí se evita stock negativo en cada base y se registra el conflicto central cuando corresponde. Los pendientes y conflictos deben quedar resueltos antes de reemplazar la base local por otro respaldo.
 
 ## Validación realizada
 
-Las pruebas de integración crean bases aisladas PostgreSQL, sin escribir en bases existentes, y verifican sesiones separadas, rollback, venta concurrente de la última unidad, reintentos de venta, importación atómica, migración repetible, permisos de sesión, sincronización con confirmación perdida y bloqueo de cola por conflicto de stock. Las pruebas de Excel comprueban formato, ceros iniciales, fórmulas, duplicados y precisión decimal.
+Las pruebas de integración crean bases o esquemas nuevos y aislados, sin escribir en las tablas de trabajo, y verifican sesiones separadas, rollback, venta concurrente de la última unidad, reintentos de venta, importación atómica, migración repetible, permisos de sesión, sincronización con confirmación perdida y bloqueo de cola por conflicto de stock. Las pruebas de Excel comprueban formato, ceros iniciales, fórmulas, duplicados y precisión decimal.
 
-Resultado de la suite de esta implementación: **28 pruebas aprobadas**, incluidas las de PostgreSQL real. Se usó un entorno de pruebas temporal; no se modificaron los dos entornos virtuales del usuario.
+Las pruebas PostgreSQL se omiten sin `POS_TEST_DATABASE_URL` o `POS_TEST_SCHEMA_URL`. Consulta el resultado de tu ejecución para distinguir las comprobaciones realizadas de las omitidas. Las pruebas nuevas de catálogo incluyen CRUD, auditoría de ajustes, roles y sincronización.

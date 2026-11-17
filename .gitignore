@@ -4,7 +4,12 @@
 
 **/.env
 .venv/
+.venv-codex/
 .pytest_cache/
 **/.flet/
 **/build/
 *.log
+frontend/.pos_settings.json
+frontend/.pos_settings.tmp
+/docs/credenciales_usuarios*.local.md
+/docs/credenciales_usuarios*.local.md

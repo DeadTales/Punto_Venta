@@ -115,6 +115,8 @@ flowchart TD
 
 ### 👤 Persona 2: Módulo de Catálogo, Productos e Inventario
 
+**Implementación en el repositorio:** consulta [el detalle de Persona 2](docs/persona2.md) para archivos, uso, validaciones, endpoints y preparación de la base. El catálogo se integra en la vista existente `inventory_view.py`; la migración `05_ajustes_inventario.sql` agrega el historial de ajustes. Las pruebas de PostgreSQL requieren configurar un servidor de pruebas.
+
 **Objetivo:** Administración integral de existencias, control de inventarios, categorías y códigos de barras.
 
 #### 1. Base de Datos & ORM (`backend/src/modules/product/`)
@@ -124,10 +126,10 @@ flowchart TD
 
 #### 2. Backend (FastAPI en `backend/src/modules/product/` y `categories/`)
 - Implementar los archivos ya estructurados en `backend/src/modules/product/`:
-  - `product.model.py`: Modelo SQLAlchemy de `PRODUCTO` y `CATEGORIA`.
-  - `produc.schema.py` (o `product.schema.py`): Esquemas Pydantic (`ProductCreate`, `ProductUpdate`, `ProductResponse`).
-  - `product.controller.py`: Lógica de negocio (actualización de stock, filtrado por categoría, cálculo de márgenes de ganancia).
-  - `product.route.py`: Endpoints REST:
+  - `product_model.py` y `category/category_model.py`: Modelos SQLAlchemy de `PRODUCTO` y `CATEGORIA`.
+  - `product_schema.py`: Esquemas Pydantic (`ProductCreate`, `ProductUpdate`, `ProductResponse`).
+  - `product_service.py`, `product_repository.py`, `inventory/` y `catalog/`: Reglas de negocio, consultas, ajustes e instantáneas del catálogo.
+  - `product_route.py` y las rutas de categorías e inventario: Endpoints REST:
     - `GET /api/products`: Lista paginada con filtros por nombre o categoría.
     - `GET /api/products/barcode/{code}`: Búsqueda rápida por lector óptico para la caja.
     - `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}`.
@@ -180,78 +182,87 @@ flowchart TD
 
 ---
 
-## 4. Estructura de Carpetas Recomendada (Ampliando la Existente)
+## 4. Estructura de Carpetas y Convenciones
 
-Para mantener total orden sin romper lo ya creado:
+La implementación de Persona 2 usa nombres Python con guion bajo: `<dominio>_<capa>.py`. Cada dominio define únicamente las capas que necesita. Las reglas de negocio están en servicios, las consultas en repositorios, los contratos en esquemas y los endpoints en rutas. Los módulos de los otros integrantes conservan su estructura previa. Consulta [las reglas de estilo](docs/code_style.md).
 
 ```text
 Punto_Venta/
-├── backend/
-│   ├── requirements.txt            <-- Añadir sqlalchemy, asyncpg
-│   └── src/
-│       ├── main.py                 <-- Inicializa FastAPI, CORS y monta los routers
-│       ├── core/
-│       │   ├── config/
-│       │   │   ├── db_config.py    <-- Conexión async con create_async_engine (Supabase)
-│       │   │   └── security.py     <-- Funciones passlib y pyjwt
-│       │   └── middlewares/
-│       │       └── token.py        <-- Dependencia get_current_user y validación de roles
-│       ├── modules/
-│       │   ├── auth/               <-- Persona 1
-│       │   │   ├── auth.model.py
-│       │   │   ├── auth.schema.py
-│       │   │   ├── auth.controller.py
-│       │   │   └── auth.route.py
-│       │   ├── client/             <-- Persona 1
-│       │   │   ├── client.model.py
-│       │   │   ├── client.schema.py
-│       │   │   ├── client.controller.py
-│       │   │   └── client.route.py
-│       │   ├── product/            <-- Persona 2
-│       │   │   ├── product.model.py
-│       │   │   ├── product.schema.py
-│       │   │   ├── product.controller.py
-│       │   │   └── product.route.py
-│       │   ├── category/           <-- Persona 2
-│       │   │   ├── category.model.py
-│       │   │   ├── category.schema.py
-│       │   │   └── category.route.py
-│       │   └── sale/               <-- Persona 3
-│       │       ├── sale.model.py
-│       │       ├── sale.schema.py
-│       │       ├── sale.controller.py
-│       │       ├── sale.route.py
-│       │       └── receipt_generator.py <-- ReportLab + textwrap
-│       └── utils/
-│           └── regex.py
-│
-├── frontend/
-│   ├── requirements.txt            <-- Añadir pyusb
-│   └── src/
-│       ├── main.py                 <-- Punto de entrada Flet (ft.app(target=main))
-│       ├── assets/
-│       ├── components/             <-- Componentes UI compartidos (navbar, dialogs, cards)
-│       ├── models/                 <-- Modelos Pydantic (User, Product, Sale, CartItem)
-│       ├── services/
-│       │   ├── api_client.py       <-- Cliente base httpx con configuración de baseUrl y Token
-│       │   ├── auth_service.py     <-- Persona 1
-│       │   ├── client_service.py   <-- Persona 1
-│       │   ├── product_service.py  <-- Persona 2
-│       │   ├── sale_service.py     <-- Persona 3
-│       │   └── printer_service.py  <-- Persona 3 (escpos, pyusb, pyserial)
-│       └── views/
-│           ├── login_view.py       <-- Persona 1
-│           ├── users_view.py       <-- Persona 1
-│           ├── clients_view.py     <-- Persona 1
-│           ├── products_view.py    <-- Persona 2
-│           ├── categories_view.py  <-- Persona 2
-│           └── pos_view.py         <-- Persona 3 (Punto de venta y cobro)
-│
-└── db/                             <-- Ya ejecutado y validado en Supabase
-    ├── schema/01_tablas_iniciales.sql
-    ├── migration/02_datos_iniciales_sistema.sql
-    └── backup/03_seed_datos_prueba.sql
+|-- backend/
+|   |-- requirements.txt
+|   |-- requirements-dev.txt
+|   |-- src/
+|       |-- main.py
+|       |-- cli.py
+|       |-- core/
+|       |   |-- config/
+|       |   |   |-- db_config.py
+|       |   |   |-- settings.py
+|       |   |-- repository.py
+|       |   |-- security.py
+|       |-- modules/
+|           |-- __init__.py
+|           |-- entities.py              # Entidades existentes y exports de Persona 2
+|           |-- routes.py                # Rutas existentes de los otros módulos
+|           |-- auth/
+|           |-- product/
+|           |   |-- product_model.py
+|           |   |-- product_schema.py
+|           |   |-- product_repository.py
+|           |   |-- product_service.py
+|           |   |-- product_route.py
+|           |-- category/
+|           |   |-- category_model.py
+|           |   |-- category_schema.py
+|           |   |-- category_repository.py
+|           |   |-- category_service.py
+|           |   |-- category_route.py
+|           |-- catalog/
+|           |   |-- catalog_model.py
+|           |   |-- catalog_repository.py
+|           |   |-- catalog_dependencies.py
+|           |   |-- catalog_schema.py
+|           |   |-- catalog_service.py
+|           |   |-- catalog_sync_service.py
+|           |-- inventory/
+|           |   |-- inventory_model.py
+|           |   |-- inventory_schema.py
+|           |   |-- inventory_repository.py
+|           |   |-- inventory_service.py
+|           |   |-- inventory_import_service.py
+|           |   |-- inventory_sync_service.py
+|           |   |-- inventory_route.py
+|           |-- sale/                    # schemas.py y service.py existentes
+|           |-- sync/                    # models.py y service.py existentes
+|-- frontend/src/
+|   |-- main.py
+|   |-- app.py
+|   |-- components/
+|   |-- models/
+|   |-- services/
+|   |   |-- api_client.py
+|   |   |-- product_service.py
+|   |-- views/
+|       |-- inventory_view.py
+|       |-- categories_view.py
+|       |-- inventory_adjust_view.py
+|       |-- people_view.py
+|       |-- pos_view.py
+|       |-- reports_view.py
+|       |-- settings_view.py
+|-- shared/
+|   |-- catalog.py
+|   |-- inventory_excel.py
+|-- tests/
+|-- pyproject.toml
+|-- db/
+    |-- schema/01_tablas_iniciales.sql
+    |-- migration/
+        |-- 04_conexion_y_sincronizacion.sql
+        |-- 05_ajustes_inventario.sql
 ```
+
+Los modelos permanecen asociados a las tablas originales. La reorganización de archivos no requiere una migración adicional ni modifica datos en Supabase. El registro de ajustes utiliza la migración 05 ya documentada.
 
 ---
 

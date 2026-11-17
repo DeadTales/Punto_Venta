@@ -1,7 +1,7 @@
 from io import BytesIO
 
-from openpyxl import Workbook, load_workbook
 import pytest
+from openpyxl import Workbook, load_workbook
 
 from shared.inventory_excel import HEADERS, parse_inventory, template_bytes
 
@@ -10,15 +10,23 @@ def workbook(rows):
     wb = Workbook()
     wb.active.title = "Inventario"
     wb.active.append(HEADERS)
+
     for row in rows:
         wb.active.append(row)
+
     data = BytesIO()
     wb.save(data)
+
     return data.getvalue()
 
 
 def row(**changes):
-    return [changes.get(k, v) for k, v in zip(HEADERS, ["001234", "Agua", "General", None, "6.50", "12.00", "24.750", "5"])]
+    return [
+        changes.get(k, v)
+        for k, v in zip(
+            HEADERS, ["001234", "Agua", "General", None, "6.50", "12.00", "24.750", "5"]
+        )
+    ]
 
 
 def test_template_has_separate_example_and_blank_import_sheet():
@@ -35,12 +43,22 @@ def test_preserves_barcode_and_decimal_quantities():
     assert str(preview.rows[0].stock_actual) == "24.750"
 
 
-@pytest.mark.parametrize("changes", [
-    {"codigo_barras": 1234}, {"nombre": ""}, {"precio_venta": "=2+2"},
-    {"precio_compra": "-1"}, {"precio_venta": "1.001"}, {"stock_actual": "0.0001"},
-    {"stock_actual": "NaN"}, {"stock_actual": "Infinity"}, {"stock_actual": None},
-    {"precio_venta": "100000000"}, {"stock_actual": "10000000"},
-])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"codigo_barras": 1234},
+        {"nombre": ""},
+        {"precio_venta": "=2+2"},
+        {"precio_compra": "-1"},
+        {"precio_venta": "1.001"},
+        {"stock_actual": "0.0001"},
+        {"stock_actual": "NaN"},
+        {"stock_actual": "Infinity"},
+        {"stock_actual": None},
+        {"precio_venta": "100000000"},
+        {"stock_actual": "10000000"},
+    ],
+)
 def test_rejects_invalid_cells(changes):
     result = parse_inventory(workbook([row(**changes)]))
     assert result.errors and result.errors[0]["fila"] == 2

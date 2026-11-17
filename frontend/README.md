@@ -2,24 +2,19 @@
 
 Desde la raíz, con el entorno frontend activo:
 
-```bash
-pip install -r frontend/requirements.txt
-python frontend/src/main,py
+```powershell
+python -m pip install -r frontend/requirements.txt
+python -m frontend.src.main
 ```
 
-También admite `flet run frontend/src/main.py`. Se usa la API de Flet **1.1.2**, con selectores de archivos asíncronos y `page.show_dialog`. En Linux instala Zenity con el gestor de paquetes de tu distribución si no está disponible. [Referencia oficial del selector](https://flet.dev/docs/services/filepicker/).
+Se utiliza Flet 1.1.2 con servicios y selectores de archivos asíncronos. También admite `python frontend/src/main.py`. En Linux el selector de archivos puede requerir Zenity.
 
-`frontend/.env.example` documenta `POS_MODE=demo` (predeterminado) y `POS_MODE=api`.
+`frontend/.env` selecciona `POS_MODE=api` para los datos reales y `API_BASE_URL` para la API. `POS_MODE=demo` usa datos ficticios en memoria. Las contraseñas y los tokens no se guardan en disco.
 
-- **Demo:** todos los datos son ficticios, marcados en la cabecera. Los formularios de clientes/usuarios, importaciones, carrito y cobros modifican únicamente memoria. El corte simula una apertura/cierre; no hay operaciones reales ni envío de correos ni comandos a impresoras.
-- **API:** login obligatorio, catálogos, inventario, importación y cobro contra FastAPI.
+La interfaz incluye gestión de clientes y empleados, inventario, categorías, ajustes, caja y cortes persistentes, historial de ventas, cancelaciones y tickets PDF/ESC-POS. Los reportes cargan todas las páginas y exportan el conjunto a CSV. Configuración permite cambiar correo y contraseña, guardar la apariencia y configurar impresoras USB, seriales o de red.
 
-Los requirements se normalizaron a UTF-8 y dependencias directas: Flet, HTTP, validación, Excel y periféricos. SQLAlchemy/asyncpg pertenecen al entorno backend. Si necesitas que **el entorno frontend ejecute también la API local**, instala explícitamente:
+`app.py` coordina sesión y navegación; las vistas están en `views/`, los componentes en `components/`, los estados en `models/` y HTTP, productos, personas, tickets e impresoras en `services/`. Los contratos compartidos viven en `shared/`.
 
-```bash
-pip install -r frontend/requirements-offline.txt
-```
+Las preferencias se guardan en `.pos_settings.json`, ignorado por Git. La impresión requiere un dispositivo compatible y su controlador; el botón Imprimir prueba envía un trabajo físico. El modo demo también permite imprimir cuando se solicita expresamente.
 
-Estructura: `app.py` coordina sesión, navegación y estado; `views/` contiene pantallas; `components/ui.py` reúne estilos y componentes; `models/` contiene estado y datos demo; `services/api_client.py` centraliza HTTP. El contrato de importación vive en `shared/inventory_excel.py` para usar las mismas validaciones en demo y API.
-
-Las preferencias visuales/periféricas duran durante la sesión. Los reportes son exploratorios sobre los registros cargados (hasta 500 ventas en API). Las predicciones muestran una media simple con su método; no simulan un modelo entrenado.
+Consulta [la guía de operación](../docs/operacion.md). El entorno frontend no necesita credenciales PostgreSQL; `requirements-offline.txt` permite instalar el backend en el mismo entorno si se elige esa distribución.
