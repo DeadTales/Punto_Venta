@@ -15,13 +15,20 @@ class Repository:
         return await self.session.get(self.model, identifier)
 
     async def list(self, limit: int = 100, offset: int = 0):
-        return list((await self.session.scalars(
-            select(self.model).order_by(*self.model.__table__.primary_key.columns)
-            .offset(offset).limit(limit)
-        )).all())
+        return list(
+            (
+                await self.session.scalars(
+                    select(self.model)
+                    .order_by(*self.model.__table__.primary_key.columns)
+                    .offset(offset)
+                    .limit(limit)
+                )
+            ).all()
+        )
 
     async def add(self, **values):
         record = self.model(**values)
         self.session.add(record)
         await self.session.flush()
+
         return record

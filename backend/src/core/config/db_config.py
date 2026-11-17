@@ -1,6 +1,8 @@
 """Un gestor/pool por proceso; una sesión independiente por unidad de trabajo."""
-from contextlib import asynccontextmanager
+
+import re
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import Request
 from sqlalchemy.engine import make_url
@@ -23,19 +25,38 @@ class Database:
 
     def __init__(self, settings: Settings):
         url = make_url(settings.database_url)
+
         if url.drivername in {"postgres", "postgresql"}:
             url = url.set(drivername="postgresql+asyncpg")
+
         if url.drivername != "postgresql+asyncpg":
             raise ValueError("Esta aplicación requiere PostgreSQL con asyncpg")
+
         query = dict(url.query)
         sslmode = query.pop("sslmode", None)
+
         # asyncpg recibe ssl en lugar del parámetro libpq sslmode.
         if sslmode:
             query["ssl"] = sslmode
+
+        connect_args = {"timeout": 5, "command_timeout": 30}
+
+        if settings.database_schema is not None:
+            if re.fullmatch(r"pos_test_[0-9a-f]{32}", settings.database_schema) is None:
+                raise ValueError(
+                    "El esquema aislado debe ser un identificador de pruebas válido"
+                )
+
+            connect_args["server_settings"] = {"search_path": settings.database_schema}
+
         self.engine = create_async_engine(
-            url.set(query=query), pool_pre_ping=True, pool_recycle=1800,
-            pool_size=settings.pool_size, max_overflow=settings.max_overflow,
-            pool_timeout=10, connect_args={"timeout": 5, "command_timeout": 30},
+            url.set(query=query),
+            pool_pre_ping=True,
+            pool_recycle=1800,
+            pool_size=settings.pool_size,
+            max_overflow=settings.max_overflow,
+            pool_timeout=10,
+            connect_args=connect_args,
             echo=False,
         )
         self.sessions = async_sessionmaker(self.engine, expire_on_commit=False)
@@ -43,6 +64,7 @@ class Database:
     @asynccontextmanager
     async def session(self) -> AsyncIterator[AsyncSession]:
         """Commit sólo al terminar; rollback y devolución al pool ante errores."""
+
         async with self.sessions() as session:
             async with session.begin():
                 yield session

@@ -33,3 +33,6 @@ class SaleSnapshot(BaseModel):
     payment_method: str
     fecha_hora: str
     items: list[FrozenLine] = Field(min_length=1, max_length=500)
+    tasa_impuesto: Annotated[
+        Decimal, Field(ge=0, le=1, decimal_places=4, allow_inf_nan=False)
+    ] = Decimal(0)
